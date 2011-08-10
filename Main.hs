@@ -26,7 +26,12 @@ main = do
     args <- getArgs
     runGHCWithArgsForTargets args $ do
         modules <- compileAndLoadModules
-        liftIO $ writeFile moduleInitFile $ moduleInitFileContents modules
+        targetFiles <- getTargetFiles
+        let isTarget m = case ml_hs_file (ms_location m) of
+                                Just f | f `elem` targetFiles -> True
+                                _ -> False
+        let targetModules = filter isTarget modules
+        liftIO $ writeFile moduleInitFile $ moduleInitFileContents targetModules
         packageIds <- getUniquePackageIds modules
         maybeLinkFilePath <- liftIO getLinkFilePath
         case maybeLinkFilePath of
@@ -153,9 +158,8 @@ moduleInitFile = "module_init.c"
 
 moduleInitFileContents moduleSummaries = unlines $
     [ "#include <HsFFI.h>"
-    , "#include \"FibTest_stub.h\""
-    , "#include <stdio.h>"
     ]
+    ++ ["#include \"" ++ f ++ "\"" | f <- map headerStub moduleSummaries ]
     ++ ["extern void " ++ s ++ "(void);" | s <- stginits] ++ 
     [ "static void library_init(void) __attribute__((constructor));"
     , "static void library_init(void)"
@@ -176,10 +180,12 @@ moduleInitFileContents moduleSummaries = unlines $
     ]
 
   where
-    stginits :: [String]
     stginits = map stginit moduleSummaries
     stginit m
-        = "__stginit_" ++ moduleNameString (moduleName $ ms_mod m)
-    
-    
+        = "__stginit_" ++ (fixZEncoding $ moduleNameString $ moduleName $ ms_mod m)
+    headerStub m
+        = dropExtension (ml_obj_file $ ms_location m) ++ "_stub.h"
 
+fixZEncoding = concatMap $ \c -> case c of
+                '.' -> "zi"
+                _ -> [c]
