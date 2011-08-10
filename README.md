@@ -33,24 +33,29 @@ ghc-xcode directory:
          - [args] is a list of compiler flags (e.g.: `-O2`, `-threaded` or `-XScopedTypeVariables`)
          - [modules] is a list of paths to the modules which contain `foreign export` declarations
 
-3. The script will perform an initial compile of the [modules] as well as any
-other module files which they `import`.  Then, it will print a list of instructions for how to
-add the Haskell source code to the XCode project.  For example:
+3. The script will do the following :
+    - Perform an initial compile of the [modules] as well as any
+other module files which they `import`.  
+    - Generate a C file named `module_init.c` which calls
+      `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors
 
-        Compiling...
-        Succeeded.
-        You will need to make the following changes in XCode:
-          * Add Header Search Paths:
-              /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
-          * Add Other Linker Flags:
-              -liconv
-          * Add the following files to XCode:
-              module_init.c
-              FibTest_stub.h
-          * Add a "Run Script" build phase which occurs before the
-            "Compile Sources" phase and calls: 
-              /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
-        
+    - Print a list of instructions for how to
+    add the Haskell source code to the XCode project.  For example:
+
+            Compiling...
+            Succeeded.
+            You will need to make the following changes in XCode:
+              * Add Header Search Paths:
+                  /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
+              * Add Other Linker Flags:
+                  -liconv
+              * Add the following files to XCode:
+                  module_init.c
+                  FibTest_stub.h
+              * Add a "Run Script" build phase which occurs before the
+                "Compile Sources" phase and calls: 
+                  /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
+            
     Follow those instructions.
 
 4. Try building the XCode project.  The `ghc-xcode` build phase will rebuild
