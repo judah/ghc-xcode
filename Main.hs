@@ -25,6 +25,7 @@ main = do
     args <- getArgs
     runGHCWithArgsForTargets args $ do
         modules <- compileAndLoadModules
+        liftIO $ writeFile moduleInitFile $ moduleInitFileContents modules
         packageIds <- getUniquePackageIds modules
         maybeLinkFilePath <- liftIO getLinkFilePath
         case maybeLinkFilePath of
@@ -59,11 +60,6 @@ getListOfObjectFiles modules packageIds = do
     packageLibFiles <- mapM getPackageLibraryFile packageIds
     return $ objectFiles ++ packageLibFiles
     
-
-
-
-moduleInitFile = "module_init.c"
-
 compileAndLoadModules = do
     liftIO $ hPutStrLn stderr "Compiling..."
     success <- load LoadAllTargets
@@ -140,3 +136,40 @@ getIncludePaths = do
 
 getStubHeaders = fmap (map ((++"_stub.h") . dropExtension))
                     getTargetFiles
+
+---------
+moduleInitFile = "module_init.c"
+
+moduleInitFileContents moduleSummaries = unlines $
+    [ "#include <HsFFI.h>"
+    , "#include \"FibTest_stub.h\""
+    , "#include <stdio.h>"
+    ]
+    ++ ["extern void " ++ s ++ "(void);" | s <- stginits] ++ 
+    [ "static void library_init(void) __attribute__((constructor));"
+    , "static void library_init(void)"
+    , "{"
+    , "static char *argv[] = { \"PROGNAME\", 0 }, **argv_ = argv;"
+    , "static int argc = 1;"
+    , ""
+    , "hs_init(&argc, &argv_);"
+    , "printf(\"Here also!\\n\");"
+    ]
+    ++ ["hs_add_root(" ++ s ++ ");" | s <- stginits] ++
+    [ "}"
+    , ""
+    , "static void library_exit(void) __attribute__((destructor));"
+    , "static void library_exit(void)"
+    , "{"
+    , "hs_exit();"
+    , "}"
+    ]
+
+  where
+    stginits :: [String]
+    stginits = map stginit moduleSummaries
+    stginit m
+        = "__stginit_" ++ moduleNameString (moduleName $ ms_mod m)
+    
+    
+
