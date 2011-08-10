@@ -73,4 +73,6 @@ any problems getting it set up.
   less efficient when no files need recompilation.)
 - Display all necessary linker flags like `-liconv` which are specified in the
   Haskell packages.  (This is currently hard-coded.)
+- Call hs_init with the correct program name.
+- Possibly make it easier to use RTS options.
 
