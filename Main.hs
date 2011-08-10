@@ -66,6 +66,11 @@ main = do
             let [libname] = packageHsLibs d conf
             let [libdir] = libraryDirs conf
             liftIO $ putStrLn $ libdir </> "lib" ++ (libname ::String) <.> "a"
+        --
+        let [rtsIncludeDir] = includeDirs $ getPackageDetails pkgState
+                                                rtsPackageId
+        putStrLn "***************"
+        liftIO $ putStrLn $ "Add include path: " ++ rtsIncludeDir
 
 
         
