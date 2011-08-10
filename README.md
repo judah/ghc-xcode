@@ -1,32 +1,72 @@
-## Plan for ghc-xcode:
+## Summary
 
-Invoke like:
+The `ghc-xcode` program makes it easier to develop 
+graphical Haskell applications on OS X and iOS.
+It integrates into the XCode build system as a custom build
+phase.  The programmer uses `foreign export` 
+declarations to export a C API for their Haskell
+code.  The `ghc-xcode` program ensures that all of the
+necessary object files will be compiled and linked together 
+with the rest of the XCode project.
 
-    ghc-xcode -threaded -XScopedTypeVariables -O2 ... Foo.hs Bar.hs
+This package has only been tested with XCode-4.1.  It also 
+currently requires ghc-7.2 or later.
 
-where Foo.hs, Bar.hs, etc. have foreign export calls in them.
+## Installation
 
-## If not run as part of an Xcode build
+This package may be installed by calling the following code from within the
+ghc-xcode directory:
 
-1. Mention that it's not run as part of an xcode build.
-2. Mention the `_stub.h` files that need to be added, plus `module_init.c`
-3. and also the linker flags that need to be added (just -liconv, for now?
-   better to pull from package...
-4. Mention the -I that's necessary for `HsFFI.h`
-5. Print a list of the object files that will be used
+    cabal update; cabal install 
 
-## If run as part of an Xcode build
+## Instructions
 
-1. Compile all modules passed in, plus other modules which they depend on.
-   (Don't needlessly recompile.)
-2. Generate a module_init.c file which calls hs_init and hs_add_root.
-3. Append `LINK_FILE_LIST_...` with all of the necessary object files.
+1. Copy the necessary Haskell modules into the directory that contains the
+`.xcodeproj` file.  We will call this the "XCode directory".
+
+2. `cd` into the XCode directory.  Run:
+
+        ghc-xcode [args] [modules]
+
+    where:
+
+         - [args] is a list of compiler flags (e.g.: `-O2`, `-threaded` or `-XScopedTypeVariables`)
+         - [modules] is a list of paths to the modules which contain `foreign export` declarations
+
+3. The script will compile the modules and print a list of instructions for how to
+add the Haskell source code to the XCode project.  For example:
+
+        Compiling...
+        Succeeded.
+        You will need to make the following changes in XCode:
+        * Add Header Search Paths: /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
+        * Add Other Linker Flags: -liconv
+        * Add the following files to XCode:
+            module_init.c
+            haskell/FibTest_stub.h
+        * Add a "Run Script" build phase which occurs before the "Compile Sources" phase and calls: 
+             /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
+                
+    Follow those instructions.
+
+4. Try building the XCode project.  The `ghc-xcode` build phase will rebuild
+the modules and their dependencies as necessary.  It will also tell
+XCode's link step to include the 
+necessary module and package object files.
+    
+    If it fails, check the build logs; the most likely culprit is a missing C
+    library or framework.  These may be added in the XCode target's Build
+    Settings.
+
+This project is still somewhat experimental, so let me know if you run into
+any problems getting it set up.
 
 ## TODOs
-
-- Actuall implement all of the above
 - Print a status message for each module as we compile it, and
   make it more clear which module each error message belongs to.
 - Only compile the Haskell files; don't load them.  (The GHC API makes it
   easier to compile-and-load than to just compile, but the former seems
   less efficient when no files need recompilation.)
+- Display all necessary linker flags like `-liconv` which are specified in the
+  Haskell packages.  (This is currently hard-coded.)
+
