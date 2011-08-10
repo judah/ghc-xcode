@@ -1,7 +1,17 @@
 Name:                ghc-xcode
 Version:             0.1
--- Synopsis:            
--- Description:         
+Synopsis:            Helper tool for integrating Haskell into the XCode build process.
+Description:         The ghc-xcode program makes it easier to develop 
+                     graphical Haskell applications on OS X and iOS.
+                     It integrates into the XCode build system as a custom build
+                     phase.  The programmer uses @foreign export@ 
+                     declarations to export a C API for their Haskell
+                     code.  The ghc-xcode program ensures that all of the
+                     necessary object files will be compiled and linked together 
+                     with the rest of the XCode project.
+                     .
+                     This package has only been tested with XCode-4.1.  It also 
+                     currently requires ghc-7.2 or later.
 License:             BSD3
 License-file:        LICENSE
 Author:              Judah Jacobson
@@ -9,8 +19,7 @@ Maintainer:          judah.jacobson@gmail.com
 Copyright:           (c) Judah Jacobson 2011
 Category:            Development
 Build-type:          Simple
-
--- Constraint on the version of Cabal needed to build this package.
+Homepage:           https://github.com/judah/ghc-xcode
 Cabal-version:       >=1.6
 
 
@@ -18,6 +27,7 @@ Executable ghc-xcode
   Main-is:  Main.hs
   
   Build-depends: base==4.4.*, ghc==7.2.*, containers==0.4.*,
-                 filepath==1.2.*, ghc-paths==0.1.*
+                 filepath==1.2.*, ghc-paths==0.1.*,
+                 executable-path==0.0.*
   
   -- Other-modules:       
