@@ -30,4 +30,3 @@ where Foo.hs, Bar.hs, etc. have foreign export calls in them.
 - Only compile the Haskell files; don't load them.  (The GHC API makes it
   easier to compile-and-load than to just compile, but the former seems
   less efficient when no files need recompilation.)
-- Handle `-threaded` on the command-line.
