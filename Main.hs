@@ -36,8 +36,12 @@ printInstructions :: [ModSummary] -> [PackageId] -> Ghc ()
 printInstructions modules packageIds = do
     liftIO $ putStrLn "You will need to make the following changes in XCode:" 
     rtsIncludeDir <- getIncludePaths
-    liftIO $ putStrLn $ "* Add include path: " ++ rtsIncludeDir
-    liftIO $ putStrLn "* Add library flag: -liconv"
+    -- The header is necessary for gcc to find HsFFI.h.
+    liftIO $ putStrLn $ 
+        "* Add a \"Run Script\" build phase which calls "
+        ++ "ghc-xcode and occurs before the \"Compile Sources\" phase."
+    liftIO $ putStrLn $ "* Add Header Search Paths: " ++ rtsIncludeDir
+    liftIO $ putStrLn "* Add Other Linker Flags: -liconv"
     stubHeaders <- getStubHeaders
     liftIO $ putStrLn $ "* Add the following files to XCode:"
     liftIO $ putStrLn $ unlines $ map ("    "++)
@@ -46,19 +50,19 @@ printInstructions modules packageIds = do
 writeObjectFiles linkFilePath modules packageIds = do
     objectFiles <- moduleObjectFiles modules
     packageLibFiles <- mapM getPackageLibraryFile packageIds
-    liftIO $ appendFile linkFilePath
-        $ unlines $ objectFiles ++ packageLibFiles
+    let objFiles = objectFiles ++ packageLibFiles
+    liftIO $ do
+        hPutStrLn stderr $ "Adding object files:"
+        mapM_ (hPutStrLn stderr) objFiles
+        appendFile linkFilePath
+            $ unlines $ objFiles
     
 getLinkFilePath = IOError.catchIOError (do
     arch <- getEnv "CURRENT_ARCH"
     variant <- getEnv "CURRENT_VARIANT"
-    fmap Just $ getEnv $ "LINK_FILE_LIST_" ++ arch ++ "_" ++ variant)
+    fmap Just $ getEnv $ "LINK_FILE_LIST_" ++ variant ++ "_" ++ arch)
             (const $ return Nothing)
 
-getListOfObjectFiles modules packageIds = do
-    objectFiles <- moduleObjectFiles modules
-    packageLibFiles <- mapM getPackageLibraryFile packageIds
-    return $ objectFiles ++ packageLibFiles
     
 compileAndLoadModules = do
     liftIO $ hPutStrLn stderr "Compiling..."
@@ -120,7 +124,8 @@ moduleObjectFiles moduleSummaries = do
     return $ 
         map (ml_obj_file . ms_location) moduleSummaries
         -- stub files
-        ++ map ((++ "_stub.o") . dropExtension) targetFiles
+        -- Apparently not needed in ghc-7.2.
+        -- ++ map ((++ "_stub.o") . dropExtension) targetFiles
 
 getTargetFiles = do
     targets <- getTargets
@@ -153,7 +158,6 @@ moduleInitFileContents moduleSummaries = unlines $
     , "static int argc = 1;"
     , ""
     , "hs_init(&argc, &argv_);"
-    , "printf(\"Here also!\\n\");"
     ]
     ++ ["hs_add_root(" ++ s ++ ");" | s <- stginits] ++
     [ "}"
