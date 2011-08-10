@@ -46,7 +46,7 @@ add the Haskell source code to the XCode project.  For example:
               -liconv
           * Add the following files to XCode:
               module_init.c
-              haskell/FibTest_stub.h
+              FibTest_stub.h
           * Add a "Run Script" build phase which occurs before the
             "Compile Sources" phase and calls: 
               /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
