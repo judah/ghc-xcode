@@ -20,6 +20,7 @@ import System.FilePath
 import qualified Data.Set as Set
 import System.IO.Error as IOError
 import System.IO
+import System.Environment.Executable
 
 main = do
     args <- getArgs
@@ -29,23 +30,25 @@ main = do
         packageIds <- getUniquePackageIds modules
         maybeLinkFilePath <- liftIO getLinkFilePath
         case maybeLinkFilePath of
-            Nothing -> printInstructions modules packageIds
+            Nothing -> printInstructions args modules packageIds
             Just f -> writeObjectFiles f modules packageIds
 
-printInstructions :: [ModSummary] -> [PackageId] -> Ghc ()
-printInstructions modules packageIds = do
+printInstructions :: [String] -> [ModSummary] -> [PackageId] -> Ghc ()
+printInstructions args modules packageIds = do
+    progName <- liftIO $ getExecutablePath
     liftIO $ putStrLn "You will need to make the following changes in XCode:" 
     rtsIncludeDir <- getIncludePaths
     -- The header is necessary for gcc to find HsFFI.h.
-    liftIO $ putStrLn $ 
-        "* Add a \"Run Script\" build phase which calls "
-        ++ "ghc-xcode and occurs before the \"Compile Sources\" phase."
     liftIO $ putStrLn $ "* Add Header Search Paths: " ++ rtsIncludeDir
     liftIO $ putStrLn "* Add Other Linker Flags: -liconv"
     stubHeaders <- getStubHeaders
     liftIO $ putStrLn $ "* Add the following files to XCode:"
-    liftIO $ putStrLn $ unlines $ map ("    "++)
+    liftIO $ putStr $ unlines $ map ("    "++)
                                $ [ moduleInitFile ] ++ stubHeaders
+    liftIO $ putStrLn $ 
+        "* Add a \"Run Script\" build phase which "
+        ++ "occurs before the \"Compile Sources\" phase and calls: "
+        ++ "\n     " ++ progName ++ " " ++ unwords args
 
 writeObjectFiles linkFilePath modules packageIds = do
     objectFiles <- moduleObjectFiles modules
