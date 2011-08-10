@@ -1,7 +1,9 @@
 ## Plan for ghc-xcode:
 
 Invoke like:
+
     ghc-xcode -threaded -XScopedTypeVariables -O2 ... Foo.hs Bar.hs
+
 where Foo.hs, Bar.hs, etc. have foreign export calls in them.
 
 ## If not run as part of an Xcode build
