@@ -33,7 +33,9 @@ ghc-xcode directory:
          - [args] is a list of compiler flags (e.g.: `-O2`, `-threaded` or `-XScopedTypeVariables`)
          - [modules] is a list of paths to the modules which contain `foreign export` declarations
 
-3. The script will compile the modules and print a list of instructions for how to
+3. The script will perform an initial compile of the [modules] as well as any
+other module files which they `import`. 
+Then, it will print a list of instructions for how to
 add the Haskell source code to the XCode project.  For example:
 
         Compiling...
