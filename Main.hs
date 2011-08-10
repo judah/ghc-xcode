@@ -1,3 +1,5 @@
+module Main where
+
 import GHC
 import Outputable
 import DynFlags
@@ -10,7 +12,6 @@ import Packages
 import Module
  
 import GHC.Paths ( libdir )
---GHC.Paths is available via cabal install ghc-paths
  
 import System.Environment
 import System.Exit
@@ -34,10 +35,6 @@ main =
         setSessionDynFlags dflags2
         targets <- mapM (flip guessTarget Nothing) fileArgs
         setTargets targets
-        -- TODO: print status message for each module as we compile it.
-        --       (and then make it more clear where each error message belongs
-        --       to.)
-        -- TODO: Only compile the files, don't load.
         success <- load LoadAllTargets
         liftIO $ case success of
             Succeeded -> putStrLn "Succeeded."
@@ -56,8 +53,6 @@ main =
                         return $ map fst $ dep_pkgs $ mi_deps iface
         let unique_pkgs = Set.toList $ Set.fromList 
                             $ [rtsPackageId,stringToPackageId "ffi-1.0"] ++ concat all_deps
-        -- liftIO $ putStrLn $ showSDoc $ ppr unique_pkgs
-
         pkgState <- fmap pkgState getSessionDynFlags
         d <- getSessionDynFlags
         flip mapM unique_pkgs $ \pkgId -> do
@@ -66,24 +61,7 @@ main =
             let [libdir] = libraryDirs conf
             liftIO $ putStrLn $ libdir </> "lib" ++ libname <.> "a"
 
-        -- Still TODO: libHSffi and libHSrts.
-        -- TODO: also things like -liconv
- 
- {-
-        flip mapM_ modules $ \theModule -> do
-            let m = ms_mod theModule
-            Just info <- getModuleInfo (ms_mod theModule)
-            let Just iface = modInfoIface info
-            let deps = map fst $ dep_pkgs $ mi_deps iface
-            liftIO $ print (showSDoc $ ppr m,showSDoc $ ppr deps)
--}
-            
 
         
 
 
-{-
-
-./Print-modules ~/Programming/TeXWatch/MacDVI/haskell/TeX/DVI/Foreign.hs -i$HOME/Programming/TeXWatch/MacDVI/haskell -XRecordWildCards -XTemplateHaskell -XScopedTypeVariables -XCPP -XQuasiQuotes 
-
--}
