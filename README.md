@@ -37,8 +37,7 @@ ghc-xcode directory:
     - Perform an initial compile of the [modules] as well as any
 other module files which they `import`.  
     - Generate a C file named `module_init.c` which calls
-      `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors
-
+      `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors.
     - Print a list of instructions for how to
     add the Haskell source code to the XCode project.  For example:
 
