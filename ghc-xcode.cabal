@@ -28,6 +28,4 @@ Executable ghc-xcode
   
   Build-depends: base==4.4.*, ghc==7.2.*, containers==0.4.*,
                  filepath==1.2.*, ghc-paths==0.1.*,
-                 executable-path==0.0.*
-  
-  -- Other-modules:       
+                 executable-path==0.0.*, pretty==1.1.*

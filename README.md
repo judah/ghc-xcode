@@ -34,21 +34,23 @@ ghc-xcode directory:
          - [modules] is a list of paths to the modules which contain `foreign export` declarations
 
 3. The script will perform an initial compile of the [modules] as well as any
-other module files which they `import`. 
-Then, it will print a list of instructions for how to
+other module files which they `import`.  Then, it will print a list of instructions for how to
 add the Haskell source code to the XCode project.  For example:
 
         Compiling...
         Succeeded.
         You will need to make the following changes in XCode:
-        * Add Header Search Paths: /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
-        * Add Other Linker Flags: -liconv
-        * Add the following files to XCode:
-            module_init.c
-            haskell/FibTest_stub.h
-        * Add a "Run Script" build phase which occurs before the "Compile Sources" phase and calls: 
-             /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
-                
+          * Add Header Search Paths:
+              /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
+          * Add Other Linker Flags:
+              -liconv
+          * Add the following files to XCode:
+              module_init.c
+              haskell/FibTest_stub.h
+          * Add a "Run Script" build phase which occurs before the
+            "Compile Sources" phase and calls: 
+              /Users/judah/.cabal/bin/ghc-xcode haskell/FibTest.hs
+        
     Follow those instructions.
 
 4. Try building the XCode project.  The `ghc-xcode` build phase will rebuild

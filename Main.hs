@@ -1,7 +1,6 @@
 module Main where
 
 import GHC
-import Outputable
 import DynFlags
 import MonadUtils
 import Digraph (flattenSCC)
@@ -21,6 +20,7 @@ import qualified Data.Set as Set
 import System.IO.Error as IOError
 import System.IO
 import System.Environment.Executable
+import Text.PrettyPrint.HughesPJ
 
 main = do
     args <- getArgs
@@ -36,19 +36,22 @@ main = do
 printInstructions :: [String] -> [ModSummary] -> [PackageId] -> Ghc ()
 printInstructions args modules packageIds = do
     progName <- liftIO $ getExecutablePath
-    liftIO $ putStrLn "You will need to make the following changes in XCode:" 
-    rtsIncludeDir <- getIncludePaths
-    -- The header is necessary for gcc to find HsFFI.h.
-    liftIO $ putStrLn $ "* Add Header Search Paths: " ++ rtsIncludeDir
-    liftIO $ putStrLn "* Add Other Linker Flags: -liconv"
     stubHeaders <- getStubHeaders
-    liftIO $ putStrLn $ "* Add the following files to XCode:"
-    liftIO $ putStr $ unlines $ map ("    "++)
-                               $ [ moduleInitFile ] ++ stubHeaders
-    liftIO $ putStrLn $ 
-        "* Add a \"Run Script\" build phase which "
-        ++ "occurs before the \"Compile Sources\" phase and calls: "
-        ++ "\n     " ++ progName ++ " " ++ unwords args
+    let progInvocation = progName ++ " " ++ unwords args
+    rtsIncludeDir <- getIncludePaths
+    let instructionList = 
+            text "* Add Header Search Paths:"
+            $$ nest 4 (text rtsIncludeDir)
+            $$ text "* Add Other Linker Flags:"
+            $$ nest 4 (text "-liconv")
+            $$ text "* Add the following files to XCode:"
+            $$ nest 4 (vcat $ map text $ [ moduleInitFile ] ++ stubHeaders)
+            $$ text "* Add a \"Run Script\" build phase which occurs before the"
+            $$ text "  \"Compile Sources\" phase and calls: "
+            $$ nest 4 (text progInvocation) 
+    liftIO $ print $ 
+        text "You will need to make the following changes in XCode:"
+        $$ nest 2 instructionList
 
 writeObjectFiles linkFilePath modules packageIds = do
     objectFiles <- moduleObjectFiles modules
