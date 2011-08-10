@@ -1,0 +1,23 @@
+Name:                ghc-xcode
+Version:             0.1
+-- Synopsis:            
+-- Description:         
+License:             BSD3
+License-file:        LICENSE
+Author:              Judah Jacobson
+Maintainer:          judah.jacobson@gmail.com
+Copyright:           (c) Judah Jacobson 2011
+Category:            Development
+Build-type:          Simple
+
+-- Constraint on the version of Cabal needed to build this package.
+Cabal-version:       >=1.6
+
+
+Executable ghc-xcode
+  Main-is:  Main.hs
+  
+  Build-depends: base==4.4.*, ghc==7.2.*, containers==0.4.*,
+                 filepath==1.2.*, ghc-paths==0.1.*
+  
+  -- Other-modules:       
