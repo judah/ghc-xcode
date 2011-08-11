@@ -154,10 +154,12 @@ getStubHeaders = fmap (map ((++"_stub.h") . dropExtension))
                     getTargetFiles
 
 ---------
-moduleInitFile = "module_init.c"
+moduleInitFile = "_hs_module_init.c"
 
 moduleInitFileContents moduleSummaries = unlines $
-    [ "#include <HsFFI.h>"
+    [ "/* This file has been generated automatically by ghc-xcode."
+    , "   You should not edit it directly. */"
+    , "#include <HsFFI.h>"
     ]
     ++ ["#include \"" ++ f ++ "\"" | f <- map headerStub moduleSummaries ]
     ++ ["extern void " ++ s ++ "(void);" | s <- stginits] ++ 

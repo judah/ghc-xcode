@@ -36,7 +36,7 @@ ghc-xcode directory:
 3. The script will do the following :
     - Perform an initial compile of the [modules] as well as any
 other module files which they `import`.  
-    - Generate a C file named `module_init.c` which calls
+    - Generate a C file named `_hs_module_init.c` which calls
       `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors.
     - Print a list of instructions for how to
     add the Haskell source code to the XCode project.  For example:
@@ -49,7 +49,7 @@ other module files which they `import`.
               * Add Other Linker Flags:
                   -liconv
               * Add the following files to XCode:
-                  module_init.c
+                  _hs_module_init.c
                   FibTest_stub.h
               * Add a "Run Script" build phase which occurs before the
                 "Compile Sources" phase and calls: 
