@@ -79,4 +79,5 @@ any problems getting it set up.
   Haskell packages.  (This is currently hard-coded.)
 - Call hs_init with the correct program name.
 - Possibly make it easier to use RTS options.
-
+- XCode recompiles every file every time (including the precompiled header);
+  why does that happen and how can we prevent it?
