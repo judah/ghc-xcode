@@ -79,3 +79,4 @@ any problems getting it set up.
 - XCode recompiles every file every time (including the precompiled header);
   why does that happen and how can we prevent it?
 - Print a status message for each Haskell module as we compile it.
+- Don't require -no_pie on versions of GHC where gmp has that problem fixed.
