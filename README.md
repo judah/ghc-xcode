@@ -71,8 +71,6 @@ This project is still somewhat experimental, so let me know if you run into
 any problems getting it set up.
 
 ## TODOs
-- Print a status message for each module as we compile it, and
-  make it more clear which module each error message belongs to.
 - Only compile the Haskell files; don't load them.  (The GHC API makes it
   easier to compile-and-load than to just compile, but the former seems
   less efficient when no files need recompilation.)
@@ -80,3 +78,4 @@ any problems getting it set up.
   Haskell packages.  (This is currently hard-coded.)
 - XCode recompiles every file every time (including the precompiled header);
   why does that happen and how can we prevent it?
+- Print a status message for each Haskell module as we compile it.
