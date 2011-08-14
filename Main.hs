@@ -21,6 +21,11 @@ import System.IO.Error as IOError
 import System.IO
 import System.Environment.Executable
 import Text.PrettyPrint.HughesPJ
+import qualified Data.ByteString.Char8 as B
+import qualified Data.Text as Text
+import Data.Text.Encoding (encodeUtf8)
+import Numeric (showHex)
+import Data.Char (isPrint)
 
 main = do
     args <- getArgs
@@ -31,7 +36,8 @@ main = do
                                 Just f | f `elem` targetFiles -> True
                                 _ -> False
         let targetModules = filter isTarget modules
-        liftIO $ writeFile moduleInitFile $ moduleInitFileContents targetModules
+        execName <- liftIO getExecutableName
+        liftIO $ writeFile moduleInitFile $ moduleInitFileContents execName targetModules
         packageIds <- getUniquePackageIds modules
         maybeLinkFilePath <- liftIO getLinkFilePath
         case maybeLinkFilePath of
@@ -157,7 +163,7 @@ getStubHeaders = fmap (map ((++"_stub.h") . dropExtension))
 ---------
 moduleInitFile = "_hs_module_init.c"
 
-moduleInitFileContents moduleSummaries = unlines $
+moduleInitFileContents execName moduleSummaries = unlines $
     [ "/* This file has been generated automatically by ghc-xcode."
     , "   You should not edit it directly. */"
     , "#include <HsFFI.h>"
@@ -167,7 +173,7 @@ moduleInitFileContents moduleSummaries = unlines $
     [ "static void library_init(void) __attribute__((constructor));"
     , "static void library_init(void)"
     , "{"
-    , "static char *argv[] = { \"PROGNAME\", 0 }, **argv_ = argv;"
+    , "static char *argv[] = { " ++ quotedCString execName ++ ", 0 }, **argv_ = argv;"
     , "static int argc = 1;"
     , ""
     , "hs_init(&argc, &argv_);"
@@ -192,3 +198,24 @@ moduleInitFileContents moduleSummaries = unlines $
 fixZEncoding = concatMap $ \c -> case c of
                 '.' -> "zi"
                 _ -> [c]
+
+
+-- Return the value of ${EXECUTABLE_NAME}.
+-- Return a default value if it's not set (most likely, because we're not running in XCode).
+getExecutableName = IOError.catchIOError (getEnv "EXECUTABLE_NAME")
+                        $ const $ return "PROGNAME"
+
+-- Takes the input and turns it into a C expression representation of the string.
+-- which is encoded in UTF-8 and escapes problem characters.
+quotedCString :: String -> String
+quotedCString = cRep . cvtToUTF8
+  where
+    cvtToUTF8 = B.unpack . encodeUtf8 . Text.pack
+    cRep s = "\"" ++ concatMap cRepChar s ++ "\""
+    cRepChar '"' = "\\\""
+    cRepChar c
+        | isPrint c && c < '\128' = [c]
+        | otherwise = "\\x" ++ hexRep (fromEnum c)
+    hexRep c
+        | c < 16 = "0" ++ showHex c "" -- probably won't happen in practice
+        | otherwise = showHex c ""
