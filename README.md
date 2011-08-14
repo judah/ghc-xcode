@@ -48,6 +48,7 @@ other module files which they `import`.
                   /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
               * Add Other Linker Flags:
                   -liconv
+                  -Wl,-no_compact_unwind,-no_pie
               * Add the following files to XCode:
                   _hs_module_init.c
                   FibTest_stub.h
