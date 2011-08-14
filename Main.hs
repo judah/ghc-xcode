@@ -104,7 +104,7 @@ getPackageLibraryFile packageId = do
     -- packagehsLibs takes -threaded, etc. into account
     -- for the rts package's libs
     let [libname] = packageHsLibs dflags conf
-    let [libdir] = libraryDirs conf
+    let libdir:_ = libraryDirs conf
     return $ libdir </> "lib" ++ (libname :: String) <.> "a"
 
 
