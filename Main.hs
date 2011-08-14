@@ -49,6 +49,7 @@ printInstructions args modules packageIds = do
             $$ nest 4 (text rtsIncludeDir)
             $$ text "* Add Other Linker Flags:"
             $$ nest 4 (text "-liconv")
+            $$ nest 4 (text "-Wl,-no_compact_unwind,-no_pie")
             $$ text "* Add the following files to XCode:"
             $$ nest 4 (vcat $ map text $ [ moduleInitFile ] ++ stubHeaders)
             $$ text "* Add a \"Run Script\" build phase which occurs before the"
