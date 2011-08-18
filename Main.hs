@@ -10,6 +10,9 @@ import PackageConfig
 import Packages
 import Module
 import StaticFlags
+import ErrUtils
+import qualified Outputable as O
+import qualified Pretty as GHCPretty
  
 import GHC.Paths ( libdir )
  
@@ -17,7 +20,7 @@ import System.Environment
 import System.Exit
 import System.FilePath
 import qualified Data.Set as Set
-import System.IO.Error as IOError
+import Control.Exception as E
 import System.IO
 import System.Environment.Executable
 import Text.PrettyPrint.HughesPJ
@@ -30,6 +33,7 @@ import Data.Char (isPrint)
 main = do
     args <- getArgs
     runGHCWithArgsForTargets args $ do
+        setCustomLogger
         modules <- compileAndLoadModules
         targetFiles <- getTargetFiles
         let isTarget m = case ml_hs_file (ms_location m) of
@@ -75,11 +79,11 @@ writeObjectFiles linkFilePath modules packageIds = do
         appendFile linkFilePath
             $ unlines $ objFiles
     
-getLinkFilePath = IOError.catchIOError (do
+getLinkFilePath = E.catch (do
     arch <- getEnv "CURRENT_ARCH"
     variant <- getEnv "CURRENT_VARIANT"
     fmap Just $ getEnv $ "LINK_FILE_LIST_" ++ variant ++ "_" ++ arch)
-            (const $ return Nothing)
+            (\(e::IOException) -> return Nothing)
 
     
 compileAndLoadModules = do
@@ -202,8 +206,8 @@ fixZEncoding = concatMap $ \c -> case c of
 
 -- Return the value of ${EXECUTABLE_NAME}.
 -- Return a default value if it's not set (most likely, because we're not running in XCode).
-getExecutableName = IOError.catchIOError (getEnv "EXECUTABLE_NAME")
-                        $ const $ return "PROGNAME"
+getExecutableName = E.catch (getEnv "EXECUTABLE_NAME")
+                        (\(e::IOException) ->  return "PROGNAME")
 
 -- Takes the input and turns it into a C expression representation of the string.
 -- which is encoded in UTF-8 and escapes problem characters.
@@ -219,3 +223,43 @@ quotedCString = cRep . cvtToUTF8
     hexRep c
         | c < 16 = "0" ++ showHex c "" -- probably won't happen in practice
         | otherwise = showHex c ""
+
+------------
+-- Custom logger.
+
+setCustomLogger :: Ghc ()
+setCustomLogger = do
+    -- Don't change the logger if we're running outside of XCode.
+    execName <- liftIO $ E.try $ getEnv "EXECUTABLE_NAME"
+    case execName of
+        Left (e::IOException) -> return () -- not XCode
+        Right _ -> do
+                    dflags <- getSessionDynFlags
+                    setSessionDynFlags dflags {log_action = myLogger}
+                    return ()
+
+
+-- XCode parses error messages of the forms:
+-- Foo.hs:10: error: message
+-- Foo.hs:10: warning: message
+-- also possibly "note".
+-- Unfortunately, GHC hard-codes "Warning: " in front of warnings,
+-- so we can't handle them correctly yet.
+myLogger :: LogAction
+myLogger SevError span style msg = do
+    GHCPretty.printDoc GHCPretty.OneLineMode stderr
+            $ O.runSDoc fullMsg $ O.initSDocContext style
+    hFlush stderr
+  where fullMsg = mkXCodeLocMessage (srcSpanStart span) msg
+
+mkXCodeLocMessage :: SrcLoc -> Message -> Message
+mkXCodeLocMessage loc msg
+    -- = O.hang (xcodeLoc loc) 4 msg
+    = xcodeLoc loc O.<+> msg
+
+xcodeLoc :: SrcLoc -> Message
+xcodeLoc (UnhelpfulLoc s) = O.ftext s
+xcodeLoc (RealSrcLoc loc)
+        = O.ftext (srcLocFile loc) O.<> O.colon
+            O.<> O.ppr (srcLocLine loc) O.<> O.colon
+            O.<+> O.text "error:"
