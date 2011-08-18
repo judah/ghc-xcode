@@ -88,7 +88,8 @@ getLinkFilePath = E.catch (do
     
 compileAndLoadModules = do
     liftIO $ hPutStrLn stderr "Compiling..."
-    success <- load LoadAllTargets
+    success <- handleSourceError (\e -> printException e >> return Failed)
+                $ load LoadAllTargets
     liftIO $ case success of
             Succeeded -> hPutStrLn stderr "Succeeded."
             Failed -> do
