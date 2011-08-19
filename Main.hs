@@ -252,6 +252,7 @@ myLogger SevError span style msg = do
             $ O.runSDoc fullMsg $ O.initSDocContext style
     hFlush stderr
   where fullMsg = mkXCodeLocMessage (srcSpanStart span) msg
+myLogger sev span style msg = defaultLogAction sev span style msg
 
 mkXCodeLocMessage :: SrcLoc -> Message -> Message
 mkXCodeLocMessage loc msg
