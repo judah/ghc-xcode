@@ -84,3 +84,4 @@ any problems getting it set up.
 - Emit the line/column format 
   [expected by
   XCode](http://shazronatnitobi.wordpress.com/2010/12/04/xcode-shell-build-phase-reporting-of-errors).
+- Use an `.hmap` file to prevent the need for explicitly specifying `-I/Library/Frameworks/...`
