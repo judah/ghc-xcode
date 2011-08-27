@@ -71,9 +71,6 @@ This project is still somewhat experimental, so let me know if you run into
 any problems getting it set up.
 
 ## TODOs
-- Only compile the Haskell files; don't load them.  (The GHC API makes it
-  easier to compile-and-load than to just compile, but the former seems
-  less efficient when no files need recompilation.)
 - Display all necessary linker flags like `-liconv` which are specified in the
   Haskell packages.  (This is currently hard-coded.)
 - XCode recompiles every file every time (including the precompiled header);
