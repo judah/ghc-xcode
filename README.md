@@ -69,16 +69,3 @@ necessary module and package object files.
 
 This project is still somewhat experimental, so let me know if you run into
 any problems getting it set up.
-
-## TODOs
-- Display all necessary linker flags like `-liconv` which are specified in the
-  Haskell packages.  (This is currently hard-coded.)
-- XCode recompiles every file every time (including the precompiled header);
-  why does that happen and how can we prevent it?
-- Print a status message for each Haskell module as we compile it.
-- Don't require -no_pie on versions of GHC where gmp has that problem fixed.
-- Check whether compile warnings are reported correctly.
-- Emit the line/column format 
-  [expected by
-  XCode](http://shazronatnitobi.wordpress.com/2010/12/04/xcode-shell-build-phase-reporting-of-errors).
-- Use an `.hmap` file to prevent the need for explicitly specifying `-I/Library/Frameworks/...`
