@@ -30,11 +30,11 @@ ghc-xcode directory:
 
     where:
 
-         - [args] is a list of compiler flags (e.g.: `-O2`, `-threaded` or `-XScopedTypeVariables`)
-         - [modules] is a list of paths to the modules which contain `foreign export` declarations
+    - `[args]` is a list of compiler flags (e.g.: `-O2`, `-threaded` or `-XScopedTypeVariables`)
+    - `[modules]` is a list of paths to the modules which contain `foreign export` declarations
 
-3. The script will do the following :
-    - Perform an initial compile of the [modules] as well as any
+3. The `ghc-xcode` program will:
+    - Perform an initial compile of the `[modules]` as well as any
 other module files which they `import`.  
     - Generate a C file named `_hs_module_init.c` which calls
       `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors.
