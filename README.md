@@ -36,20 +36,22 @@ ghc-xcode directory:
 3. The `ghc-xcode` program will:
     - Perform an initial compile of the `[modules]` as well as any
 other module files which they `import`.  
-    - Generate a C file named `_hs_module_init.c` which calls
+    - Create a C file named `_hs_module_init.c` which calls
       `hs_init`, `hs_exit` and `hs_add_root` in C constructors/destructors.
+    - Create a symbolic link named `_ghc_rts_include` which points
+      to ghc's rts include folder
     - Print a list of instructions for how to
     add the Haskell source code to the XCode project.  For example:
 
             Compiling...
             Succeeded.
             You will need to make the following changes in XCode:
-              * Add Header Search Paths:
-                  /Library/Frameworks/GHC.framework/Versions/7.2.1-x86_64/usr/lib/ghc-7.2.1/include
-              * Add Other Linker Flags:
+              * Under Build Settings, add Header Search Paths:
+                  _ghc_rts_include
+              * Under Build Settings, add Other Linker Flags:
                   -liconv
                   -Wl,-no_compact_unwind,-no_pie
-              * Add the following files to XCode:
+              * Add the following files to your XCode project:
                   _hs_module_init.c
                   FibTest_stub.h
               * Add a "Run Script" build phase which occurs before the

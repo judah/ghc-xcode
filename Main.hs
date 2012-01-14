@@ -19,6 +19,8 @@ import GHC.Paths ( libdir )
 import System.Environment
 import System.Exit
 import System.FilePath
+import System.Directory (doesDirectoryExist, removeFile)
+import System.Posix.Files (getSymbolicLinkStatus, isSymbolicLink, createSymbolicLink)
 import qualified Data.Set as Set
 import Control.Exception as E
 import System.IO
@@ -29,6 +31,7 @@ import qualified Data.Text as Text
 import Data.Text.Encoding (encodeUtf8)
 import Numeric (showHex)
 import Data.Char (isPrint)
+import Control.Monad (when)
 
 main = do
     args <- getArgs
@@ -43,24 +46,30 @@ main = do
         execName <- liftIO getExecutableName
         liftIO $ writeFile moduleInitFile $ moduleInitFileContents execName targetModules
         packageIds <- getUniquePackageIds modules
+        -- Create a symbolic link to the GHC RTS include folder.
+        getIncludePaths >>= liftIO . createIncludeLink rtsIncludeLink
+        -- Try to get the path to the "link file" from environmental variables
+        -- which XCode sets during a build.
+        -- If we didn't find them, we're running in a shell.
         maybeLinkFilePath <- liftIO getLinkFilePath
         case maybeLinkFilePath of
             Nothing -> printInstructions args modules packageIds
             Just f -> writeObjectFiles f modules packageIds
+
+rtsIncludeLink = "_ghc_rts_include"
 
 printInstructions :: [String] -> [ModSummary] -> [PackageId] -> Ghc ()
 printInstructions args modules packageIds = do
     progName <- liftIO $ getExecutablePath
     stubHeaders <- getStubHeaders
     let progInvocation = progName ++ " " ++ unwords args
-    rtsIncludeDir <- getIncludePaths
     let instructionList = 
-            text "* Add Header Search Paths:"
-            $$ nest 4 (text rtsIncludeDir)
-            $$ text "* Add Other Linker Flags:"
+            text "* Under Build Settings, add Header Search Paths:"
+            $$ nest 4 (text rtsIncludeLink)
+            $$ text "* Under Build Settings, add Other Linker Flags:"
             $$ nest 4 (text "-liconv")
             $$ nest 4 (text "-Wl,-no_compact_unwind,-no_pie")
-            $$ text "* Add the following files to XCode:"
+            $$ text "* Add the following files to your XCode project:"
             $$ nest 4 (vcat $ map text $ [ moduleInitFile ] ++ stubHeaders)
             $$ text "* Add a \"Run Script\" build phase which occurs before the"
             $$ text "  \"Compile Sources\" phase and calls: "
@@ -78,6 +87,19 @@ writeObjectFiles linkFilePath modules packageIds = do
         mapM_ (hPutStrLn stderr) objFiles
         appendFile linkFilePath
             $ unlines $ objFiles
+
+createIncludeLink linkPath targetPath = do
+    -- Delete the symbolic link, if it already exists.
+    existingFolder <- doesDirectoryExist linkPath
+    when existingFolder $ do
+        stat <- getSymbolicLinkStatus linkPath
+        if isSymbolicLink stat
+            then removeFile linkPath
+            else error $ "Existing file " ++ show linkPath 
+                        ++ " doesn't look like a symbolic link"
+    -- Add a new symbolic link to the target folder
+    createSymbolicLink targetPath linkPath
+
     
 getLinkFilePath = E.catch (do
     arch <- getEnv "CURRENT_ARCH"
