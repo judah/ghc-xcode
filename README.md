@@ -9,8 +9,8 @@ code.  The `ghc-xcode` program ensures that all of the
 necessary object files will be compiled and linked together 
 with the rest of the XCode project.
 
-This package has only been tested with XCode-4.1.  It also 
-currently requires ghc-7.2 or later.
+This package has been tested with XCode-4.1.  It also 
+currently requires ghc-7.4 or later.
 
 ## Installation
 

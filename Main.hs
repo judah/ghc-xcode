@@ -130,7 +130,7 @@ getUniquePackageIds modules = do
                         let Just iface = modInfoIface info
                         return $ map fst $ dep_pkgs $ mi_deps iface
     return $ Set.toList $ Set.fromList 
-           $ [rtsPackageId,stringToPackageId "ffi-1.0"] ++ concat all_deps
+           $ [rtsPackageId] ++ concat all_deps
     
 getPackageLibraryFile packageId = do
     dflags <- getSessionDynFlags
