@@ -11,6 +11,7 @@ import Packages
 import Module
 import StaticFlags
 import ErrUtils
+import FastString (unpackFS)
 import qualified Outputable as O
 import qualified Pretty as GHCPretty
  
@@ -266,24 +267,24 @@ setCustomLogger = do
 -- Foo.hs:10: error: message
 -- Foo.hs:10: warning: message
 -- also possibly "note".
--- Unfortunately, GHC hard-codes "Warning: " in front of warnings,
--- so we can't handle them correctly yet.
+-- Error messages might span multiple lines; for now, we just
+-- put it all on one line and prepend it with "error:", "warning:", etc.
 myLogger :: LogAction
-myLogger SevError span style msg = do
+myLogger sev span style msg = do
+    let fullMsg = gccLoc (srcSpanStart span)
+                     O.<+> O.text (errType sev) 
+                     O.<> O.colon O.<+> msg
     GHCPretty.printDoc GHCPretty.OneLineMode stderr
-            $ O.runSDoc fullMsg $ O.initSDocContext style
+        $ O.runSDoc fullMsg $ O.initSDocContext style
     hFlush stderr
-  where fullMsg = mkXCodeLocMessage (srcSpanStart span) msg
-myLogger sev span style msg = defaultLogAction sev span style msg
 
-mkXCodeLocMessage :: SrcLoc -> Message -> Message
-mkXCodeLocMessage loc msg
-    -- = O.hang (xcodeLoc loc) 4 msg
-    = xcodeLoc loc O.<+> msg
-
-xcodeLoc :: SrcLoc -> Message
-xcodeLoc (UnhelpfulLoc s) = O.ftext s
-xcodeLoc (RealSrcLoc loc)
-        = O.ftext (srcLocFile loc) O.<> O.colon
-            O.<> O.ppr (srcLocLine loc) O.<> O.colon
-            O.<+> O.text "error:"
+gccLoc :: SrcLoc -> Message
+gccLoc (UnhelpfulLoc s) = O.text "::"
+gccLoc (RealSrcLoc loc) = O.ftext (srcLocFile loc) O.<> O.colon
+                            O.<> O.ppr (srcLocLine loc) O.<> O.colon
+                    
+errType :: Severity -> String
+errType SevError = "error"
+errType SevWarning = "warning"
+errType SevFatal = "error"
+errType _ = "note"
