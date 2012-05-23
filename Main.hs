@@ -14,8 +14,12 @@ import ErrUtils
 import FastString (unpackFS)
 import qualified Outputable as O
 import qualified Pretty as GHCPretty
+import Config (cProjectName, cProjectVersion)
  
-import GHC.Paths ( libdir )
+import GHC.Paths ( libdir, ghc )
+
+import Paths_ghc_xcode (version)
+import Data.Version (showVersion)
  
 import System.Environment
 import System.Exit
@@ -36,6 +40,7 @@ import Control.Monad (when)
 
 main = do
     args <- getArgs
+    if "--version" `elem` args then printVersion else do
     runGHCWithArgsForTargets args $ do
         setCustomLogger
         modules <- compileAndLoadModules
@@ -56,6 +61,11 @@ main = do
         case maybeLinkFilePath of
             Nothing -> printInstructions args modules packageIds
             Just f -> writeObjectFiles f modules packageIds
+
+printVersion :: IO ()
+printVersion = do
+    putStrLn $ "ghc-xcode, version " ++ showVersion version
+    putStrLn $ cProjectName ++ ", version " ++ cProjectVersion
 
 rtsIncludeLink = "_ghc_rts_include"
 
